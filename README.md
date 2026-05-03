@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Predict Bitcoin's Next Hour
+=======
+
+>>>>>>> 5f2aac9edbdf4b8f6cafb90b970d83fab8804656
 
 ## Overview
 
