@@ -3,59 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BTC Predictor | Live Dashboard</title>
+    <title>Quant BTC Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .gradient-text { background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        :root {
+            --bg-deep: #020617;
+            --card-bg: #0f172a;
+            --accent-primary: #38bdf8;
+            --accent-secondary: #818cf8;
+            --text-muted: #94a3b8;
+        }
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: var(--bg-deep); 
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .hero-glow {
+            position: absolute;
+            top: -10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 40%;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, rgba(15, 23, 42, 0) 70%);
+            z-index: -1;
+        }
+        .card-custom {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+        .card-custom:hover {
+            border-color: rgba(56, 189, 248, 0.2);
+            transform: translateY(-2px);
+        }
+        .stat-label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+        .prediction-box {
+            background: rgba(56, 189, 248, 0.03);
+            border-left: 3px solid var(--accent-primary);
+        }
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold gradient-text">Predict Bitcoin's Next Hour</h1>
-            <div class="px-4 py-2 glass rounded-full text-sm font-semibold text-sky-400 animate-pulse">LIVE DATA</div>
-        </div>
-
-        <!-- Metrics Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="glass p-6 rounded-2xl">
-                <p class="text-slate-400 text-sm mb-1">Coverage (Target: 0.95)</p>
-                <h2 id="coverage" class="text-3xl font-bold text-sky-400">--</h2>
+<body class="min-h-screen p-6 md:p-12 relative">
+    <div class="hero-glow"></div>
+    
+    <div class="max-w-7xl mx-auto">
+        <!-- Navigation / Header -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 gap-4">
+            <div>
+                <h1 class="text-4xl font-bold tracking-tight text-white mb-2">Quant<span class="text-sky-400">BTC</span></h1>
+                <p class="text-slate-400 text-sm font-light">Next-hour interval forecasting engine</p>
             </div>
-            <div class="glass p-6 rounded-2xl">
-                <p class="text-slate-400 text-sm mb-1">Average Width</p>
-                <h2 id="width" class="text-3xl font-bold text-indigo-400">--</h2>
-            </div>
-            <div class="glass p-6 rounded-2xl">
-                <p class="text-slate-400 text-sm mb-1">Winkler Score</p>
-                <h2 id="winkler" class="text-3xl font-bold text-violet-400">--</h2>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Prediction Card -->
-            <div class="glass p-8 rounded-3xl flex flex-col justify-center items-center text-center">
-                <p class="text-slate-400 mb-2">Current BTC Price</p>
-                <h3 id="current-price" class="text-5xl font-extrabold mb-8">$ --</h3>
-                
-                <div class="w-full h-px bg-slate-700 mb-8"></div>
-                
-                <p class="text-slate-400 mb-2 text-sm uppercase tracking-widest">Next Hour Forecast</p>
-                <div id="prediction-range" class="text-2xl font-semibold text-emerald-400">
-                    $ -- to $ --
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 bg-slate-900/50 px-4 py-2 rounded-full border border-slate-800 text-xs text-slate-400">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Live Feed: Binance Vision
                 </div>
-                <p id="prediction-time" class="text-xs text-slate-500 mt-2">--</p>
+            </div>
+        </header>
+
+        <!-- Metrics Overview -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div class="card-custom p-6 rounded-2xl">
+                <p class="stat-label mb-2">Confidence Level</p>
+                <h3 class="text-2xl font-bold text-white mono">95.0%</h3>
+            </div>
+            <div class="card-custom p-6 rounded-2xl">
+                <p class="stat-label mb-2">Backtest Coverage</p>
+                <h3 id="coverage" class="text-2xl font-bold text-sky-400 mono">--</h3>
+            </div>
+            <div class="card-custom p-6 rounded-2xl">
+                <p class="stat-label mb-2">Avg. Interval Width</p>
+                <h3 id="width" class="text-2xl font-bold text-indigo-400 mono">--</h3>
+            </div>
+            <div class="card-custom p-6 rounded-2xl">
+                <p class="stat-label mb-2">Winkler Score</p>
+                <h3 id="winkler" class="text-2xl font-bold text-violet-400 mono">--</h3>
+            </div>
+        </div>
+
+        <!-- Main Workspace -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+            <!-- Left: Chart -->
+            <div class="xl:col-span-8 card-custom rounded-3xl p-8 relative overflow-hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <h4 class="text-lg font-semibold text-slate-200">Historical Volatility & Price</h4>
+                    <div class="flex gap-2 text-[10px] text-slate-500 uppercase font-bold tracking-widest">
+                        <span>Last 50 Hours</span>
+                    </div>
+                </div>
+                <div class="h-[450px]">
+                    <canvas id="priceChart"></canvas>
+                </div>
             </div>
 
-            <!-- Chart Card -->
-            <div class="lg:col-span-2 glass p-6 rounded-3xl h-[400px]">
-                <canvas id="priceChart"></canvas>
+            <!-- Right: Prediction Panel -->
+            <div class="xl:col-span-4 flex flex-col gap-8">
+                <div class="card-custom rounded-3xl p-8 flex-1 flex flex-col justify-between">
+                    <div>
+                        <p class="stat-label mb-4">Spot Price</p>
+                        <h2 id="current-price" class="text-5xl font-bold text-white mono mb-8 tracking-tighter">$ --</h2>
+                        
+                        <div class="prediction-box p-6 rounded-xl border border-sky-500/10 mb-6">
+                            <p class="stat-label text-sky-400/70 mb-3 italic">Estimated Range (1H)</p>
+                            <div id="prediction-range" class="text-2xl font-semibold text-sky-200 mono">
+                                $ -- to $ --
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between text-xs border-b border-slate-800 pb-2">
+                            <span class="text-slate-500 uppercase tracking-wider">Model Architecture</span>
+                            <span class="text-slate-300 font-semibold">GBM + Student-t</span>
+                        </div>
+                        <div class="flex justify-between text-xs border-b border-slate-800 pb-2">
+                            <span class="text-slate-500 uppercase tracking-wider">Regime Adjustment</span>
+                            <span class="text-slate-300 font-semibold text-right">Dynamic Volatility (10h/50h)</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-500 uppercase tracking-wider">Next Update</span>
+                            <span id="prediction-time" class="text-sky-400 font-mono italic">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer / Status -->
+                <div class="bg-slate-900/30 border border-slate-800/50 rounded-2xl p-4 flex items-center justify-between text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em]">
+                    <span>Secure Node Connected</span>
+                    <span class="text-slate-400">v1.2.4-STABLE</span>
+                </div>
             </div>
         </div>
     </div>
@@ -65,60 +156,83 @@
             try {
                 const response = await fetch('/api/data');
                 const data = await response.json();
-                
                 if (data.error) throw new Error(data.error);
 
-                // Update text
-                document.getElementById('coverage').innerText = data.metrics.coverage.toFixed(4);
-                document.getElementById('width').innerText = data.metrics.avg_width.toFixed(2);
-                document.getElementById('winkler').innerText = data.metrics.winkler.toFixed(2);
+                document.getElementById('coverage').innerText = (data.metrics.coverage * 100).toFixed(2) + '%';
+                document.getElementById('width').innerText = data.metrics.avg_width.toFixed(1);
+                document.getElementById('winkler').innerText = data.metrics.winkler.toFixed(1);
                 document.getElementById('current-price').innerText = `$${data.current_price.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                document.getElementById('prediction-range').innerText = `$${data.prediction.lower.toFixed(2)} — $${data.prediction.upper.toFixed(2)}`;
-                document.getElementById('prediction-time').innerText = `Valid for ${data.prediction.time}`;
+                document.getElementById('prediction-range').innerText = `$${data.prediction.lower.toLocaleString(undefined, {minimumFractionDigits: 1})} — $${data.prediction.upper.toLocaleString(undefined, {minimumFractionDigits: 1})}`;
+                
+                const time = new Date(data.prediction.time);
+                document.getElementById('prediction-time').innerText = time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-                // Update Chart
                 updateChart(data.chart_data);
             } catch (err) {
-                console.error("Fetch failed:", err);
+                console.error("Engine Fault:", err);
             }
         }
 
         let chart;
         function updateChart(chartData) {
             const ctx = document.getElementById('priceChart').getContext('2d');
-            
             if (chart) chart.destroy();
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(56, 189, 248, 0.15)');
+            gradient.addColorStop(1, 'rgba(15, 23, 42, 0)');
 
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: chartData.timestamps.map(t => t.split(' ')[1]),
+                    labels: chartData.timestamps.map(t => t.split(' ')[1].substring(0, 5)),
                     datasets: [{
-                        label: 'BTC Price',
+                        label: 'Spot Price',
                         data: chartData.prices,
                         borderColor: '#38bdf8',
-                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                        borderWidth: 2,
+                        backgroundColor: gradient,
                         fill: true,
-                        tension: 0.4,
-                        pointRadius: 0
+                        tension: 0.3,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        pointHoverBackgroundColor: '#38bdf8',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        x: { grid: { display: false }, ticks: { color: '#64748b' } },
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } }
-                    },
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleFont: { family: 'JetBrains Mono', size: 10 },
+                            bodyFont: { family: 'JetBrains Mono', size: 12 },
+                            padding: 12,
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#475569', font: { size: 10, family: 'JetBrains Mono' } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.02)', drawBorder: false },
+                            ticks: { color: '#475569', font: { size: 10, family: 'JetBrains Mono' },
+                                     callback: (val) => '$' + val.toLocaleString() }
+                        }
                     }
                 }
             });
         }
 
         fetchData();
-        setInterval(fetchData, 60000); // Update every minute
+        setInterval(fetchData, 60000);
     </script>
 </body>
 </html>
