@@ -19,7 +19,7 @@ st.set_page_config(page_title="BTC Predictor", layout="wide")
 def get_data():
     return fetch_binance_data(limit=500)
 
-st.title("Predict Bitcoin's Next Hour — AlphaI × Polaris")
+st.title("Predict Bitcoin's Next Hour")
 
 try:
     df = get_data()
