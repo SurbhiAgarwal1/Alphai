@@ -104,10 +104,19 @@ async def get_dashboard_data():
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
-    base_path = os.path.dirname(os.path.dirname(__file__))
-    html_path = os.path.join(base_path, "public", "index.html")
-    with open(html_path, "r") as f:
-        return f.read()
+    # Try multiple common paths for Vercel serverless environment
+    paths = [
+        os.path.join(os.path.dirname(__file__), "index.html"),
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "index.html"),
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "public", "index.html"),
+        "index.html",
+        "api/index.html"
+    ]
+    for p in paths:
+        if os.path.exists(p):
+            with open(p, "r") as f:
+                return f.read()
+    return HTMLResponse("index.html not found", status_code=404)
 
 # For local development
 if __name__ == "__main__":
