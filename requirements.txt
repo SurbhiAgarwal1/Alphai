@@ -4,3 +4,5 @@ numpy
 requests
 scipy
 plotly
+fastapi
+uvicorn

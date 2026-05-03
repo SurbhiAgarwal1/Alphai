@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTC Predictor | Live Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .gradient-text { background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold gradient-text">Predict Bitcoin's Next Hour</h1>
+            <div class="px-4 py-2 glass rounded-full text-sm font-semibold text-sky-400 animate-pulse">LIVE DATA</div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass p-6 rounded-2xl">
+                <p class="text-slate-400 text-sm mb-1">Coverage (Target: 0.95)</p>
+                <h2 id="coverage" class="text-3xl font-bold text-sky-400">--</h2>
+            </div>
+            <div class="glass p-6 rounded-2xl">
+                <p class="text-slate-400 text-sm mb-1">Average Width</p>
+                <h2 id="width" class="text-3xl font-bold text-indigo-400">--</h2>
+            </div>
+            <div class="glass p-6 rounded-2xl">
+                <p class="text-slate-400 text-sm mb-1">Winkler Score</p>
+                <h2 id="winkler" class="text-3xl font-bold text-violet-400">--</h2>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Prediction Card -->
+            <div class="glass p-8 rounded-3xl flex flex-col justify-center items-center text-center">
+                <p class="text-slate-400 mb-2">Current BTC Price</p>
+                <h3 id="current-price" class="text-5xl font-extrabold mb-8">$ --</h3>
+                
+                <div class="w-full h-px bg-slate-700 mb-8"></div>
+                
+                <p class="text-slate-400 mb-2 text-sm uppercase tracking-widest">Next Hour Forecast</p>
+                <div id="prediction-range" class="text-2xl font-semibold text-emerald-400">
+                    $ -- to $ --
+                </div>
+                <p id="prediction-time" class="text-xs text-slate-500 mt-2">--</p>
+            </div>
+
+            <!-- Chart Card -->
+            <div class="lg:col-span-2 glass p-6 rounded-3xl h-[400px]">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchData() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                
+                if (data.error) throw new Error(data.error);
+
+                // Update text
+                document.getElementById('coverage').innerText = data.metrics.coverage.toFixed(4);
+                document.getElementById('width').innerText = data.metrics.avg_width.toFixed(2);
+                document.getElementById('winkler').innerText = data.metrics.winkler.toFixed(2);
+                document.getElementById('current-price').innerText = `$${data.current_price.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                document.getElementById('prediction-range').innerText = `$${data.prediction.lower.toFixed(2)} — $${data.prediction.upper.toFixed(2)}`;
+                document.getElementById('prediction-time').innerText = `Valid for ${data.prediction.time}`;
+
+                // Update Chart
+                updateChart(data.chart_data);
+            } catch (err) {
+                console.error("Fetch failed:", err);
+            }
+        }
+
+        let chart;
+        function updateChart(chartData) {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            
+            if (chart) chart.destroy();
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.timestamps.map(t => t.split(' ')[1]),
+                    datasets: [{
+                        label: 'BTC Price',
+                        data: chartData.prices,
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        fetchData();
+        setInterval(fetchData, 60000); // Update every minute
+    </script>
+</body>
+</html>
