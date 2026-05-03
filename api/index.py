@@ -77,8 +77,11 @@ async def get_dashboard_data():
         
         # Metrics
         metrics = {"coverage": 0, "avg_width": 0, "winkler": 0}
-        if os.path.exists("backtest_results.jsonl"):
-            with open("backtest_results.jsonl", "r") as f:
+        base_path = os.path.dirname(os.path.dirname(__file__))
+        results_path = os.path.join(base_path, "backtest_results.jsonl")
+        
+        if os.path.exists(results_path):
+            with open(results_path, "r") as f:
                 results = [json.loads(line) for line in f]
             cov, aw, wink = calculate_metrics(results)
             metrics = {"coverage": cov, "avg_width": aw, "winkler": wink}
@@ -101,7 +104,9 @@ async def get_dashboard_data():
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
-    with open("public/index.html", "r") as f:
+    base_path = os.path.dirname(os.path.dirname(__file__))
+    html_path = os.path.join(base_path, "public", "index.html")
+    with open(html_path, "r") as f:
         return f.read()
 
 # For local development
