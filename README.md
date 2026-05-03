@@ -1,4 +1,4 @@
-# Predict Bitcoin's Next Hour — AlphaI × Polaris Challenge
+
 
 ## Overview
 
